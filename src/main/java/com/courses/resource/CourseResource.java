@@ -2,11 +2,12 @@ package com.courses.resource;
 
 import com.courses.dto.CourseCreateRequest;
 import com.courses.dto.CourseResponse;
-import com.courses.dto.CourseUpdateRequest;
-import com.courses.dto.LessonCreateRequest;
 import com.courses.dto.LessonResponse;
 import com.courses.entity.CourseEntity;
 import com.courses.service.CourseService;
+import jakarta.annotation.security.PermitAll;
+import jakarta.annotation.security.RolesAllowed;
+import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
@@ -31,66 +32,68 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 public class CourseResource {
 
-    private final CourseService service;
-
-    public CourseResource(CourseService service) {
-        this.service = service;
-    }
+    @Inject
+    CourseService courseService;
 
     @POST
-    public Response create(@Valid CourseCreateRequest request,
-                           @Context UriInfo uriInfo) {
+    @RolesAllowed("ADMIN")
+    public Response create(@Valid CourseCreateRequest request, @Context UriInfo uriInfo) {
+        CourseResponse response = courseService.create(request);
 
-        CourseEntity created = service.create(request);
 
         URI location = uriInfo.getAbsolutePathBuilder()
-                .path(String.valueOf(created.id))
+                .path(String.valueOf(response.id()))
                 .build();
 
         return Response.created(location)
-                .entity(service.toResponse(created))
+                .entity(response)
                 .build();
+
+
     }
+
 
     @GET
-    public List<CourseResponse> findAll(
-            @QueryParam("page") @DefaultValue("0") int page,
-            @QueryParam("size") @DefaultValue("10") int size) {
-        return service.findAll(page, size);
+    @PermitAll
+    public Response list( @QueryParam("page") @DefaultValue("0") int page,
+                          @QueryParam("size") @DefaultValue("10") int size
+    ) {
+        List<CourseResponse> response = courseService.findAll(page, size);
+        return Response.ok(response).build();
     }
-
     @GET
     @Path("/{id}")
-    public CourseResponse findById(@PathParam("id") Long id) {
-        return service.findById(id);
+    @PermitAll
+    public Response findById(@PathParam("id") Long id) {
+        CourseResponse response = courseService.findById(id);
+
+        return Response.ok(response).build();
     }
 
     @PUT
     @Path("/{id}")
-    public CourseResponse update(@PathParam("id") Long id,
-                                 @Valid CourseUpdateRequest request) {
-        return service.update(id, request);
+    @RolesAllowed("ADMIN")
+    public Response update(@PathParam("id") Long id) {
+        CourseEntity course = courseService.findByIdOrThrow(id);
+        return Response.ok(toResponse(course)).build();
     }
-
     @DELETE
     @Path("/{id}")
+    @RolesAllowed("ADMIN")
     public Response delete(@PathParam("id") Long id) {
-        service.delete(id);
+        courseService.delete(id);
         return Response.noContent().build();
     }
 
-    @POST
-    @Path("/{courseId}/lessons")
-    public Response createLesson(@PathParam("courseId") Long courseId,
-                                 @Valid LessonCreateRequest request) {
-        return Response.status(Response.Status.CREATED)
-                .entity(service.createLesson(courseId, request))
-                .build();
-    }
-
-    @GET
-    @Path("/{courseId}/lessons")
-    public List<LessonResponse> listLessons(@PathParam("courseId") Long courseId) {
-        return service.listLessons(courseId);
+    private CourseResponse toResponse(CourseEntity entity) {
+        List<LessonResponse> lessons = entity.lessons == null ? List.of() : entity.lessons.stream()
+                .map(lesson -> new LessonResponse(lesson.id, lesson.name))
+                .toList();
+        return new CourseResponse(entity.id, entity.name, lessons);
     }
 }
+
+
+
+
+

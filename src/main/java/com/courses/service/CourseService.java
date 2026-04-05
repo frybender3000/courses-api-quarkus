@@ -1,6 +1,10 @@
 package com.courses.service;
 
-import com.courses.dto.*;
+import com.courses.dto.CourseCreateRequest;
+import com.courses.dto.CourseResponse;
+import com.courses.dto.CourseUpdateRequest;
+import com.courses.dto.LessonCreateRequest;
+import com.courses.dto.LessonResponse;
 import com.courses.entity.CourseEntity;
 import com.courses.entity.LessonEntity;
 import com.courses.repository.CourseRepository;
@@ -23,9 +27,7 @@ public class CourseService {
     }
 
     public List<CourseResponse> findAll(int page, int size) {
-        return courseRepository.findAll()
-                .page(page, size)
-                .list()
+        return courseRepository.findAllCourses(page, size)
                 .stream()
                 .map(this::toResponse)
                 .toList();
@@ -41,81 +43,73 @@ public class CourseService {
         return toResponse(course);
     }
 
-    @Transactional
-    public CourseEntity create(CourseCreateRequest request) {
-        CourseEntity course = new CourseEntity();
-        course.name = request.name();
-
-        courseRepository.persist(course);
-        return course;
-    }
-
-    @Transactional
-    public CourseResponse update(Long id, CourseUpdateRequest request) {
+    public CourseEntity findByIdOrThrow(Long id) {
         CourseEntity course = courseRepository.findById(id);
 
         if (course == null) {
             throw new NotFoundException("Course not found");
         }
 
+        return course;
+    }
+
+    @Transactional
+    public CourseResponse create(CourseCreateRequest request) {
+        CourseEntity course = new CourseEntity();
         course.name = request.name();
+
+        courseRepository.persist(course);
+
+        return toResponse(course);
+    }
+
+    @Transactional
+    public CourseResponse update(Long id, CourseUpdateRequest request) {
+        CourseEntity course = findByIdOrThrow(id);
+
+        course.name = request.name();
+
         return toResponse(course);
     }
 
     @Transactional
     public void delete(Long id) {
-        CourseEntity course = courseRepository.findById(id);
-
-        if (course == null) {
-            throw new NotFoundException("Course not found");
-        }
-
+        CourseEntity course = findByIdOrThrow(id);
         courseRepository.delete(course);
     }
 
     @Transactional
     public LessonResponse createLesson(Long courseId, LessonCreateRequest request) {
-        CourseEntity course = courseRepository.findById(courseId);
-
-        if (course == null) {
-            throw new NotFoundException("Course not found");
-        }
+        CourseEntity course = findByIdOrThrow(courseId);
 
         LessonEntity lesson = new LessonEntity();
         lesson.name = request.name();
         lesson.course = course;
 
         lessonRepository.persist(lesson);
-        course.lessons.add(lesson);
 
         return new LessonResponse(lesson.id, lesson.name);
     }
 
     public List<LessonResponse> listLessons(Long courseId) {
-        CourseEntity course = courseRepository.findById(courseId);
+        CourseEntity course = findByIdOrThrow(courseId);
 
-        if (course == null) {
-            throw new NotFoundException("Course not found");
+        if (course.lessons == null) {
+            return List.of();
         }
 
         return course.lessons.stream()
-                .map(l -> new LessonResponse(l.id, l.name))
+                .map(lesson -> new LessonResponse(lesson.id, lesson.name))
                 .toList();
     }
 
-    public CourseResponse toResponse(CourseEntity course) {
-        List<LessonResponse> lessons = course.lessons.stream()
-                .map(l -> new LessonResponse(l.id, l.name))
+    private CourseResponse toResponse(CourseEntity course) {
+        List<LessonResponse> lessons = course.lessons == null
+                ? List.of()
+                : course.lessons.stream()
+                .map(lesson -> new LessonResponse(lesson.id, lesson.name))
                 .toList();
 
         return new CourseResponse(course.id, course.name, lessons);
     }
 }
-
-
-
-
-
-
-
-

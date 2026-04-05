@@ -1,7 +1,7 @@
 package com.courses.dto;
 
 public record LessonResponse(
-        Long Id,
+        Long id,
         String Name
 
 ) {}

@@ -2,8 +2,8 @@ package com.courses.dto;
 
 import jakarta.validation.constraints.*;
 
+public record UserCreateRequest(
 
-public record LessonCreateRequest(
         @NotBlank(message = "name is required")
         String name,
 
@@ -12,6 +12,14 @@ public record LessonCreateRequest(
         String email,
 
         @NotBlank(message = "password is required")
-        @Size(min = 8, message ="password must have as least 8 characters")
+        @Size(min = 8, message = "password must have at least 8 characters")
         String password
+
+
+
+
+
+
+
+
 ) {}
