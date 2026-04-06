@@ -32,7 +32,7 @@ public class AuthService {
             throw new NotAuthorizedException("Invalid credentials");
         }
 
-        String token = Jwt.issuer("ada-api")
+        String token = Jwt.issuer("course-api-quarkus")
                 .subject(user.email)
                 .groups(Set.of(user.role))
                 .expiresIn(Duration.ofSeconds(expiresIn))
