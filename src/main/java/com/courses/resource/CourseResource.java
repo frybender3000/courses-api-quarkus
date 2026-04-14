@@ -2,6 +2,7 @@ package com.courses.resource;
 
 import com.courses.dto.CourseCreateRequest;
 import com.courses.dto.CourseResponse;
+import com.courses.dto.CourseUpdateRequest;
 import com.courses.dto.LessonResponse;
 import com.courses.entity.CourseEntity;
 import com.courses.service.CourseService;
@@ -73,9 +74,10 @@ public class CourseResource {
     @PUT
     @Path("/{id}")
     @RolesAllowed("ADMIN")
-    public Response update(@PathParam("id") Long id) {
-        CourseEntity course = courseService.findByIdOrThrow(id);
-        return Response.ok(toResponse(course)).build();
+    public Response update(@PathParam("id") Long id, @Valid CourseUpdateRequest request) {
+        CourseResponse response = courseService.update(id, request);
+        return Response.ok(response).build();
+
     }
     @DELETE
     @Path("/{id}")

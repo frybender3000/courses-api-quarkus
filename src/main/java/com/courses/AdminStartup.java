@@ -20,12 +20,12 @@ public class AdminStartup{
 
     @Transactional
     void onStart(@Observes StartupEvent event) {
-        boolean exists  = userRepository.findByEmail("admin@admin.com").isPresent();
+        boolean exists  = userRepository.findByEmail("admin").isPresent();
 
         if(!exists) {
             UserEntity admin = new UserEntity();
-            admin.name = "name";
-            admin.email = "admin@admin";
+            admin.name = "Admin";
+            admin.email = "admin";
             admin.password = "admin";
             admin.role = "ADMIN";
 
@@ -41,6 +41,6 @@ public class AdminStartup{
     }
     @PreDestroy
     public void destroy() {
-        System.out.println("AdminStartup destrpyed");
+        System.out.println("AdminStartup destroyed");
     }
 }
