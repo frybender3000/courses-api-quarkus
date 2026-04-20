@@ -17,6 +17,7 @@ import io.quarkus.security.Authenticated;
 
 import java.net.URI;
 
+
 @Path("/users")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
